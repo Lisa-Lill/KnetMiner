@@ -10,7 +10,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>uk.ac.rothamsted.qtlnetminer.common</groupId>
 	<artifactId>common-server</artifactId>
-	<name>QTLNetMiner Common server</name>
+	<name>KnetMiner Common server</name>
 
 	<dependencies>
 
@@ -36,9 +36,14 @@
 		<dependency>
 			<groupId>net.sourceforge.ondex.core</groupId>
 			<artifactId>lucene</artifactId>
-			<version>0.6.0-SNAPSHOT</version>
+			<version>0.6.0-SNAPSHOT</version><!--1.2.1-SNAPSHOT-->
 			<scope>compile</scope>
 		</dependency>
+                <!--<dependency>
+                    <groupId>org.apache.lucene</groupId>
+                    <artifactId>lucene-analyzers-common</artifactId>
+                    <version>6.6.0</version>
+                </dependency>-->
 		<dependency>
 			<groupId>net.sourceforge.ondex.modules</groupId>
 			<artifactId>generic</artifactId>
@@ -49,6 +54,12 @@
 			<groupId>net.sourceforge.ondex.modules</groupId>
 			<artifactId>oxl</artifactId>
 			<version>0.6.0-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.sourceforge.ondex.modules</groupId>
+			<artifactId>cyjs_json</artifactId>
+			<version>1.1.1-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
 
@@ -69,7 +80,7 @@
 	 <dependency>
 	  <groupId>net.sourceforge.ondex.modules</groupId>
 	  <artifactId>cyjs_json</artifactId>
-	  <version>0.6.0-SNAPSHOT</version>
+	  <version>1.1.1-SNAPSHOT</version>
 	  <scope>compile</scope>
 	 </dependency>
 	</dependencies>

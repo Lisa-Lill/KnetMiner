@@ -19,10 +19,11 @@ import net.sourceforge.ondex.core.ONDEXConcept;
 import net.sourceforge.ondex.core.ONDEXGraph;
 
 import org.apache.lucene.queryParser.ParseException;
+//import org.apache.lucene.queryparser.classic.ParseException;
 
 /**
- * @author huf
- * @date 10-03-2010
+ * @author huf, singha
+ * @date 10-03-2010, 10-03-2017
  * 
  */
 public class ClientWorker implements Runnable {
@@ -164,7 +165,7 @@ public class ClientWorker implements Runnable {
 					}
 					if(start < end) {
 						validQTL = true;
-						QTL qtl = new QTL(chrName, "QTL", start, end, label, "significant", null, label); //set "trait" equal to qtl (=label)
+						QTL qtl = new QTL(chrName, "QTL", start, end, label, "significant", null, label, null); //set "trait" equal to qtl (=label)
 						qtls.add(qtl);
 					}
 				}
@@ -220,7 +221,8 @@ public class ClientWorker implements Runnable {
 				ONDEXGraph subGraph = ondexProvider.evidencePath(evidenceOndexID);
 				
 				long timestamp = System.currentTimeMillis();
-				String fileName = timestamp+"evidencePath.oxl";
+				//String fileName = timestamp+"evidencePath.oxl";
+				String fileName = timestamp+"evidencePath.json"; // Evidence oxl File for Network View (KnetMaps)
 				String exportPath = MultiThreadServer.props.getProperty("DataPath");	
 				String request = "";
 				// Export graph
@@ -274,7 +276,8 @@ public class ClientWorker implements Runnable {
 		
 		// File name
 		long timestamp = System.currentTimeMillis();
-		String fileName = "result_"+timestamp+".oxl";
+		//String fileName = "result_"+timestamp+".oxl";
+		String fileName = "result_"+timestamp+".json"; // File for Network View (KnetMaps)
 		String exportPath = MultiThreadServer.props.getProperty("DataPath");			
 		
 		System.out.println("Call applet! Search genes "+list.size());
@@ -376,7 +379,7 @@ public class ClientWorker implements Runnable {
 					}
 					
 					// Gene table file
-					boolean txtIsCreated = ondexProvider.writeGeneTable(
+                                        boolean txtIsCreated = ondexProvider.writeGeneTable(
 							genes, userGenes, qtl,
 							MultiThreadServer.props.getProperty("DataPath")
 							+ fileGeneTable, listMode);

@@ -139,13 +139,14 @@ cy.elements().qtip({
      var qtipMsg= "";
      try {
       if(this.isNode()) {
-         qtipMsg= "Concept: "+ this.data('value') +", type: "+ this.data('conceptType') +", PID: "+ 
-                  this.data('pid') +" , flagged: "+ this.data('flagged') +"<br>"+"Annotation: "+ 
-                  this.data('annotation');
+         qtipMsg= "<b>Concept:</b> "+ this.data('value') +"<br/><b>Type:</b> "+ this.data('conceptType');
         }
       else if(this.isEdge()) {
-              qtipMsg= "Relation: "+ this.data('label') +", From: "+ this.data('source') +", To: "+ 
-                      this.data('target');
+              qtipMsg= "<b>Relation:</b> "+ this.data('label');
+              var fromID= this.data('source'); // relation source ('fromConcept')
+              qtipMsg= qtipMsg +"<br/><b>From:</b> "+ cy.$('#'+fromID).data('value') +" ("+ cy.$('#'+fromID).data('conceptType').toLowerCase() +")";
+              var toID= this.data('target'); // relation source ('toConcept')
+              qtipMsg= qtipMsg +"<br/><b>To:</b> "+ cy.$('#'+toID).data('value') +" ("+ cy.$('#'+toID).data('conceptType').toLowerCase() +")";
              }
       }
       catch(err) { qtipMsg= "Selected element is neither a Concept nor a Relation"; }
@@ -168,17 +169,15 @@ cy.elements().qtip({
     var info= "";
     try {
     if(thisElement.isNode()) {
-       info= "Concept selected: "+ thisElement.data('value') +", type: "+ thisElement.data('conceptType')
-               +", PID: "+ thisElement.data('pid');
-       // Also update the Item Info table & display it.
-//       showItemInfo(thisElement);
+       info= "<b>Concept:</b> "+ thisElement.data('value') +"<br/><b>Type:</b> "+ thisElement.data('conceptType');
       }
       else if(thisElement.isEdge()) {
-              info= "Relation selected: "+ thisElement.data('label') +", From: "+ 
-                      thisElement.data('source') +", To: "+ thisElement.data('target');
+              info= "<b>Relation:</b> "+ this.data('label');
+              var fromID= this.data('source'); // relation source ('fromConcept')
+              info= info +"<br/><b>From:</b> "+ cy.$('#'+fromID).data('value') +" ("+ cy.$('#'+fromID).data('conceptType').toLowerCase();
+              var toID= this.data('target'); // relation source ('toConcept')
+              info= info +"<br/><b>To:</b> "+ cy.$('#'+toID).data('value') +" ("+ cy.$('#'+toID).data('conceptType').toLowerCase() +")";
              }
-       // Also update the Item Info table & display it.
-//       showItemInfo(thisElement);
       }
       catch(err) { info= "Selected element is neither a Concept nor a Relation"; }
     console.log(info);
@@ -197,7 +196,7 @@ cy.elements().qtip({
     selector: '*',
     commands: [ // an array of commands to list in the menu
         {
-         content: 'Item Info',
+         content: 'Show Info',
          select: function() {
              // Show Item Info Pane.
              openItemInfoPane();
@@ -212,8 +211,8 @@ cy.elements().qtip({
          select: function() {
              if(this.isNode()) {
                 showLinks(this);
-  			    // Refresh network legend.
-                updateCyLegend();
+                // Refresh network legend.
+                updateKnetStats();
                }
            }
         },
@@ -222,10 +221,10 @@ cy.elements().qtip({
          content: 'Hide',
          select: function() {
              //this.hide(); // hide the selected 'node' or 'edge' element.
-			 this.removeClass('ShowItAll');
-			 this.addClass('HideThis');
-			 // Refresh network legend.
-             updateCyLegend();
+             this.removeClass('ShowEle');
+             this.addClass('HideEle');
+             // Refresh network legend.
+             updateKnetStats();
             }
         },
 
@@ -234,12 +233,12 @@ cy.elements().qtip({
          select: function() { // Hide all concepts (nodes) of the same type.
              if(this.isNode()) {
                 var thisConceptType= this.data('conceptType');
-                console.log("Hide Concept by Type: "+ thisConceptType);
+        //        console.log("Hide Concept by Type: "+ thisConceptType);
                 cy.nodes().forEach(function( ele ) {
                  if(ele.data('conceptType') === thisConceptType) {
                     //ele.hide();
-                    ele.removeClass('ShowItAll');
-                    ele.addClass('HideThis');
+                    ele.removeClass('ShowEle');
+                    ele.addClass('HideEle');
                    }
                 });
                 // Relayout the graph.
@@ -247,19 +246,19 @@ cy.elements().qtip({
                }
              else if(this.isEdge()) { // Hide all relations (edges) of the same type.
                 var thisRelationType= this.data('label');
-                console.log("Hide Relation (by Label type): "+ thisRelationType);
+        //        console.log("Hide Relation (by Label type): "+ thisRelationType);
                 cy.edges().forEach(function( ele ) {
                  if(ele.data('label') === thisRelationType) {
                     //ele.hide();
-                    ele.removeClass('ShowItAll');
-                    ele.addClass('HideIt');
+                    ele.removeClass('ShowEle');
+                    ele.addClass('HideEle');
                    }
                 });
                 // Relayout the graph.
-                rerunLayout();
+               // rerunLayout();
                }
-  			// Refresh network legend.
-            updateCyLegend();
+            // Refresh network Stats.
+            updateKnetStats();
            }
         },
 
@@ -299,9 +298,9 @@ cy.elements().qtip({
                 eleType= 'label';
                 elements= cy.edges(); // fetch all the edges.
                }
-             console.log("Toggle Label on/ off by type: "+ thisElementType);
+        //     console.log("Toggle Label on/ off by type: "+ thisElementType);
 
-             if(this.isNode() || this.isEdge()) {
+           /*  if(this.isNode() || this.isEdge()) {
                 if(this.style('text-opacity') === '0') {
                    elements.forEach(function( ele ) {
                     if(ele.data(eleType) === thisElementType) {
@@ -316,18 +315,46 @@ cy.elements().qtip({
                       }
                    });
                   }
-               }
+               }*/
+                if(this.hasClass("LabelOff")) {  // show the concept/ relation Label.
+                   elements.forEach(function( ele ) {
+                    if(ele.data(eleType) === thisElementType) { // for same concept or relation types
+                       if(ele.hasClass("LabelOff")) {
+                          ele.removeClass("LabelOff");
+                          ele.addClass("LabelOn");
+                         }
+                      }
+                   });
+                  }
+                  else if(this.hasClass("LabelOn")) { // hide the concept/ relation Label.
+                      elements.forEach(function( ele ) {
+                       if(ele.data(eleType) === thisElementType) { // for same concept or relation types
+                          if(ele.hasClass("LabelOn")) {
+                             ele.removeClass("LabelOn");
+                             ele.addClass("LabelOff");
+                            }
+                         }
+                      });
+                    }
             }
         },
 
         {
          content: 'Label on/ off',
          select: function() {
-             if(this.style('text-opacity') === '0') {
+           /*  if(this.style('text-opacity') === '0') {
                 this.style({'text-opacity': '1'}); // show the concept/ relation Label.
                }
                else {
                 this.style({'text-opacity': '0'}); // hide the concept/ relation Label.
+               }*/
+             if(this.hasClass("LabelOff")) {  // show the concept/ relation Label.
+                this.removeClass("LabelOff");
+                this.addClass("LabelOn");
+               }
+             else if(this.hasClass("LabelOn")) {  // hide the concept/ relation Label.
+                this.removeClass("LabelOn");
+                this.addClass("LabelOff");
                }
             }
         }

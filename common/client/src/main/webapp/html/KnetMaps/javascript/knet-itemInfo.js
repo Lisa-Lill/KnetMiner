@@ -7,6 +7,7 @@
     var metadataJSON= allGraphData; // using the dynamically included metadata JSON object directly.
 /*    console.log("Display Item Info. for id: "+ selectedElement.id() +", isNode ?= "+ 
             selectedElement.isNode() +", isEdge ?= "+ selectedElement.isEdge());*/
+    var createExpressionEntries= false;
     try {
          var cy= $('#cy').cytoscape('get');
          // Display the Item Info table in its parent div.
@@ -31,7 +32,7 @@
             cell1.innerHTML= "Concept Type:";
             cell2.innerHTML= selectedElement.data('conceptType'); // concept Type
             // Concept 'value'.
-            row= table.insertRow(1);
+        /*    row= table.insertRow(1);
             cell1= row.insertCell(0);
             cell2= row.insertCell(1);
             cell1.innerHTML= "Value:";
@@ -41,9 +42,9 @@
             cell1= row.insertCell(0);
             cell2= row.insertCell(1);
             cell1.innerHTML= "PID:";
-            cell2.innerHTML= selectedElement.data('pid');
+            cell2.innerHTML= selectedElement.data('pid');*/
             // Concept 'Annotation'.
-            row= table.insertRow(3);
+            row= table.insertRow(1/*3*/);
             cell1= row.insertCell(0);
             cell2= row.insertCell(1);
             cell1.innerHTML= "Annotation:";
@@ -78,11 +79,18 @@
                     cell2= row.insertCell(1);
                     cell1.innerHTML= "<b>Synonyms:</b>";
                     for(var k=0; k < metadataJSON.ondexmetadata.concepts[j].conames.length; k++) {
-                        co_name= metadataJSON.ondexmetadata.concepts[j].conames[k].name;
-                        if(co_name !== "") {
+                        var coname_Synonym= metadataJSON.ondexmetadata.concepts[j].conames[k].name;
+                        var synonymID= coname_Synonym;
+                        if(coname_Synonym !== "") {
+                           if(synonymID.indexOf('<span') > -1) { // For html content within text, use html tags.
+                              synonymID= '<html>'+ synonymID +'</html>';
+                              synonymID= jQuery(synonymID).text(); // filter out html content from id field.
+                             }
+                        //   console.log("*synonym: "+ coname_Synonym +"\n \t id: "+ synonymID);
                            // Display concept synonyms along with an eye icon to use them as preferred concept name.
-                           all_concept_names= all_concept_names + co_name +
-                                   " <a><img src='html/KnetMaps/image/labelEye.png' alt='Use' id='"+ co_name +"' onclick='useAsPreferredConceptName(this.id);' onmouseover='onHover($(this));' onmouseout='offHover($(this));' title='Use as concept Label'/></a>" +"<br/>";
+                           var dispSynonym= coname_Synonym +
+                                   ' <a><img src="html/KnetMaps/image/labelEye.png" alt="Use" id="'+ synonymID +'" onclick="useAsPreferredConceptName(this.id);" onmouseover="onHover($(this));" onmouseout="offHover($(this));" title="Use as concept Label"/></a>' +'<br/>';
+                           all_concept_names= all_concept_names + dispSynonym;
                           }
                        }
                     cell2.innerHTML= all_concept_names; // all synonyms.
@@ -93,7 +101,9 @@
                     cell1.innerHTML= "<b>Attributes:</b>"; // sub-heading
                     for(var k=0; k < metadataJSON.ondexmetadata.concepts[j].attributes.length; k++) {
                         if((metadataJSON.ondexmetadata.concepts[j].attributes[k].attrname !== "size")
-                            && (metadataJSON.ondexmetadata.concepts[j].attributes[k].attrname !== "visible")) {
+                            && (metadataJSON.ondexmetadata.concepts[j].attributes[k].attrname !== "visible")
+                            && (metadataJSON.ondexmetadata.concepts[j].attributes[k].attrname !== "flagged")
+                            && (!(metadataJSON.ondexmetadata.concepts[j].attributes[k].attrname.includes("exp_")))) {
                             row= table.insertRow(table.rows.length/* - 1*/); // new row.
                             cell1= row.insertCell(0);
                             cell2= row.insertCell(1);
@@ -110,9 +120,20 @@
                                      }
                                   }
                               }
+                            else if(attrName === "URL") {
+                                    attrName="URL(s)";
+                                    var urlAttrValue= attrValue;
+                                    attrValue= "";
+                                    urlAttrValue= urlAttrValue.replace(/\s/g,''); // remove spaces, if any
+                                    var urls= urlAttrValue.split(",");
+                                    urls.forEach(function(entry,index) {
+                                         attrValue= attrValue +"<a href=\""+ entry +"\" onclick=\"window.open(this.href,'_blank');return false;\">"+ entry +"</a><br/>";
+                                        });
+                                    attrValue= attrValue.substring(0,attrValue.length-1);
+                                   }
                             // For Aminoacid sequence (AA).
-                            else if(attrName === "AA") {
-                                    attrName= "Aminoacid sequence (AA)";
+                            else if(attrName.includes("AA")) {
+                                    attrName= "Aminoacid sequence ("+ attrName +")";
                                     aaSeq= attrValue.match(/.{1,10}/g); // split into string array of 10 characters each.
                                     counter= 0;
                                     // Have monospaced font for AA sequence.
@@ -131,6 +152,9 @@
                             cell1.innerHTML= attrName;
                             cell2.innerHTML= attrValue;
                            }
+                         if(metadataJSON.ondexmetadata.concepts[j].attributes[k].attrname.includes("exp_")) { // write gene expression data later, if exists
+                            createExpressionEntries= true;
+                           }
                         }
 
                     // Get concept accessions.
@@ -147,6 +171,7 @@
                         for(var u=0; u < url_mappings.html_acc.length; u++) {
                             if(url_mappings.html_acc[u].cv === accessionID) {
                                coAccUrl= url_mappings.html_acc[u].weblink + co_acc; // co-accession url.
+                               coAccUrl= coAccUrl.replace(/\s/g,''); // remove spaces, if any
                                // open attribute url in new blank tab.
 //                               attrValue= "<a href=\""+ coAccUrl +"\" target=\"_blank\">"+ co_acc +"</a>";
                                co_acc= "<a href=\""+ coAccUrl +"\" onclick=\"window.open(this.href,'_blank');return false;\">"+ co_acc +"</a>";
@@ -157,6 +182,25 @@
                         cell1.innerHTML= accessionID;
                         cell2.innerHTML= co_acc;
                        }
+                    // Add Gene Expression data, if exists.
+                    if(createExpressionEntries) {
+                       // Create Expression header
+                       row= table.insertRow(table.rows.length); // new row.
+                       cell1= row.insertCell(0);
+                       cell1.innerHTML= "<b>Gene Expression:</b>"; // sub-heading
+                       for(var k=0; k < metadataJSON.ondexmetadata.concepts[j].attributes.length; k++) {
+                           if(metadataJSON.ondexmetadata.concepts[j].attributes[k].attrname.includes("exp_")) {
+                              // Insert Gene Expression Data
+                              row= table.insertRow(table.rows.length/* - 1*/); // new row.
+                              cell1= row.insertCell(0);
+                              cell2= row.insertCell(1);
+                              attrName= metadataJSON.ondexmetadata.concepts[j].attributes[k].attrname;
+                              attrValue= metadataJSON.ondexmetadata.concepts[j].attributes[k].value;
+                              cell1.innerHTML= attrName;
+                              cell2.innerHTML= attrValue;
+                             }
+                          }
+                      }
                    }
                }
            }
@@ -166,20 +210,24 @@
                 var cell1= row.insertCell(0);
                 var cell2= row.insertCell(1);
                 // Store the necessary data in the cells.
-                cell1.innerHTML= "Relation Label:";
+                cell1.innerHTML= "Type:";
                 cell2.innerHTML= selectedElement.data('label'); // relation label
                 // Relation 'source'.
                 row= table.insertRow(1);
                 cell1= row.insertCell(0);
                 cell2= row.insertCell(1);
                 cell1.innerHTML= "From:";
-                cell2.innerHTML= selectedElement.data('source'); // relation source ('fromConcept').
+            //    cell2.innerHTML= selectedElement.data('source'); // relation source ('fromConcept').
+                var fromID= selectedElement.data('source'); // relation source ('fromConcept').
+                cell2.innerHTML= cy.$('#'+fromID).data('value') +" ("+ cy.$('#'+fromID).data('conceptType').toLowerCase() +")"; // relation source ('fromConcept').
                 // Relation 'target'.
                 row= table.insertRow(2);
                 cell1= row.insertCell(0);
                 cell2= row.insertCell(1);
                 cell1.innerHTML= "To:";
-                cell2.innerHTML= selectedElement.data('target'); // relation target ('toConcept').
+//                cell2.innerHTML= selectedElement.data('target'); // relation target ('toConcept').
+                var toID= selectedElement.data('target'); // relation source ('toConcept').
+                cell2.innerHTML= cy.$('#'+toID).data('value') +" ("+ cy.$('#'+toID).data('conceptType').toLowerCase() +")"; // relation source ('toConcept').
                 // Get all metadata for this relation from the metadataJSON variable.
                 for(var j=0; j < metadataJSON.ondexmetadata.relations.length; j++) {
                     if(selectedElement.id() === metadataJSON.ondexmetadata.relations[j].id) {
@@ -191,7 +239,13 @@
                        cell1.innerHTML= "Evidence:";
                        for(var k=0; k < metadataJSON.ondexmetadata.relations[j].evidences.length; k++) {
                            if(metadataJSON.ondexmetadata.relations[j].evidences[k] !== "") {
-                              relationEvidences= relationEvidences + metadataJSON.ondexmetadata.relations[j].evidences[k] +", ";
+                              var evi= metadataJSON.ondexmetadata.relations[j].evidences[k]; // evidenceType
+                              if(evi.includes("ECO:")) {
+                                 evi= evi.replace(/\s/g,''); // remove spaces, if any
+                                 var evi_url= "http://ols.wordvis.com/q="+ evi; // ECO evidence_type url
+                                 evi= "<a href=\""+ evi_url +"\" onclick=\"window.open(this.href,'_blank');return false;\">"+ evi +"</a>";
+                                }
+                              relationEvidences= relationEvidences + evi +", ";
                              }
                           }
                        cell2.innerHTML= relationEvidences.substring(0, relationEvidences.length-2);
@@ -227,7 +281,7 @@
 //  myLayout.show('east', true); // to unhide (show) and open the pane.
 //  myLayout.slideOpen('east'); // open the (already unhidden) Item Info pane.
 
-  // $("#itemInfo").css("display","block"); // show the Item Infon div
+  // $("#itemInfo").css("display","block"); // show the Item Info div
   var effect = 'slide';
   // Set the options for the effect type chosen
   var options = { direction: 'right' };
@@ -245,20 +299,18 @@
  });*/
  
  function closeItemInfoPane() {
-  //   console.log("Close ItemInfo pane...");
-     $("#itemInfo").hide();
+  $("#itemInfo").hide();
  }
 
   // Remove shadow effect from nodes, if it exists.
   function removeNodeBlur(ele) {
     var thisElement= ele;
     try {
-      if(thisElement.hasClass('BlurNode')) {
-         // Remove any shadow created around the node.
-         thisElement.removeClass('BlurNode');
-        }
 /*      thisElement.neighborhood().nodes().style({'opacity': '1'});
       thisElement.neighborhood().edges().style({'opacity': '1'});*/
+      if(thisElement.hasClass('BlurNode')) { // Remove any shadow created around the node.
+         thisElement.removeClass('BlurNode');
+        }
      }
     catch(err) {
           console.log("Error occurred while removing Shadow from concepts with connected, hidden elements. \n"+"Error Details: "+ err.stack);
@@ -271,11 +323,15 @@
     // Remove css style changes occurring from a 'tapdragover' ('mouseover') event.
 //    resetRelationCSS(selectedNode);
 
-    // Show concept neighborhood.
 //    selectedNode.neighborhood().nodes().show();
 //    selectedNode.neighborhood().edges().show();
-    selectedNode.connectedEdges().connectedNodes().show();
-    selectedNode.connectedEdges().show();
+    // Show concept neighborhood.
+//    selectedNode.connectedEdges().connectedNodes().show(); // DISABLED 27/02/17
+    selectedNode.connectedEdges().connectedNodes().removeClass('HideEle');
+    selectedNode.connectedEdges().connectedNodes().addClass('ShowEle');
+//    selectedNode.connectedEdges().show(); // DISABLED 27/02/17
+    selectedNode.connectedEdges().removeClass('HideEle');
+    selectedNode.connectedEdges().addClass('ShowEle');
 
     // Remove shadow effect from the nodes that had hidden nodes in their neighborhood.
     removeNodeBlur(selectedNode);
@@ -317,7 +373,8 @@
      var cy= $('#cy').cytoscape('get'); // now we have a global reference to `cy`
      cy.nodes().forEach(function(ele) {
       if(ele.selected()) {
-         console.log("Selected concept: "+ ele.data('displayValue')/*ele.data('value')*/ +"; \t Use new preferred name (for concept Label): "+ new_conceptName);
+         if(new_conceptName.length> 30) { new_conceptName= new_conceptName.substr(0,29)+'...'; }
+   //      console.log("Selected concept: "+ ele.data('displayValue')/*ele.data('value')*/ +"; \t Use new preferred Name (for Label): "+ new_conceptName);
          /*ele.data('Value', new_conceptName);*/
          ele.data('displayValue', new_conceptName);
          if(ele.style('text-opacity') === '0') {
