@@ -1,9 +1,25 @@
+# Remember to issue cat .dockerignore-template .gitignore >.dockerignore
+# when you change .gitignore
+#
+.elasticbeanstalk
+*.iml
+.idea
+bin/
+.tmp
+dist/
+node_modules/
+bower_components/
 target/
-.project
-.settings/
 .classpath
+.project
+.settings
 stderr.log
 stdout.log
-*swp
+*.swp
 .vagrant/
-common/client/nb-configuration.xml
+nb-configuration.xml
+*.oxl
+package-lock.json
+.DS_Store
+# It is auto-downloaded by Travis
+/maven-settings.xml

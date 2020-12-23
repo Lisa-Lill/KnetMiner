@@ -1,6 +1,21 @@
-KnetMiner
-===========
+# KnetMiner
 
-KnetMiner is a client-server application for biological knowledge mining and discovery. It supports advanced queries, query suggestions and interactive visualisations. All client code is written in JavaScript/HTML5 using and extending libraries such as Cytoscape.js and D3.js to visualise genomics and network data. The server is written purely in Java making use of the Ondex API (www.ondex.org) to query a large genome-scale knowledge network (graph database). The graph database is indexed using Lucene and hold in memory to allow fast graph queries.
+KnetMiner is a web application to search and visualise genome-scale knowledge networks. It is 
+used by scientists in academia and industry to accelerate gene-trait discovery research. 
+KnetMiner offers features such as keyword, gene list and genome region search, query 
+refinement, gene ranking, gene set enrichment analysis and interactive visualisation of 
+knowledge networks and genomic information.  
 
-Check our wiki pages or contact us to learn how you can setup your own KnetMiner instance.
+The web app [can be deployed on site or in the AWS cloud using Docker][10]. Examples of free 
+and public KnetMiners are available at https://knetminer.org.  
+
+KnetMiner also offers a set of high-level web API endpoints to access and visualise the 
+knowledge networks from other applications (see details on our [wiki][20]).
+
+The data that power the web application are also available as [FAIR data][30], through
+[linked data and knowledge graph endpoints][40].
+
+[10]: https://github.com/Rothamsted/knetminer/wiki/3.-Deploying-KnetMiner-with-Docker
+[20]: https://github.com/Rothamsted/knetminer/wiki
+[30]: https://www.degruyter.com/view/j/jib.2018.15.issue-3/jib-2018-0023/jib-2018-0023.xml
+[40]: http://knetminer.org/data/
